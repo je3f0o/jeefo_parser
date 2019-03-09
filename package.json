@@ -1,0 +1,33 @@
+{
+  "name": "jeefo_parser",
+  "version": "0.0.1",
+  "description": "jeefo parser",
+  "author": {
+    "name": "je3f0o",
+    "email": "je3f0o@gmail.com"
+  },
+  "homepage": "https://github.com/je3f0o/jeefo_parser",
+  "license": "MIT",
+  "copyright": "2019",
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha \"specs/**/*_specs.js\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/je3f0o/jeefo_parser.git"
+  },
+  "keywords": [
+    "jeefo",
+    "parser"
+  ],
+  "devDependencies": {
+    "expect.js": "^0.3.1",
+    "mocha": "^3.5.0"
+  },
+  "dependencies": {
+    "jeefo_command": "^0.0.20",
+    "jeefo_tokenizer": "^0.0.37",
+    "jeefo_utils": "^0.0.5"
+  }
+}
