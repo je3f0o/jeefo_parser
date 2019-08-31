@@ -1,7 +1,7 @@
 {
-  "name": "jeefo_parser",
+  "name": "@jeefo/parser",
   "version": "0.0.1",
-  "description": "jeefo parser",
+  "description": "A library for parsing AST for any language.",
   "author": {
     "name": "je3f0o",
     "email": "je3f0o@gmail.com"
@@ -21,13 +21,9 @@
     "jeefo",
     "parser"
   ],
-  "devDependencies": {
-    "expect.js": "^0.3.1",
-    "mocha": "^3.5.0"
-  },
+  "devDependencies": {},
   "dependencies": {
     "jeefo_command": "^0.0.20",
-    "jeefo_tokenizer": "^0.0.37",
     "jeefo_utils": "^0.0.5"
   }
 }

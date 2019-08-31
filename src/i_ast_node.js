@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
-* File Name   : i_jeefo_symbol.js
+* File Name   : i_ast_node.js
 * Created at  : 2019-01-27
-* Updated at  : 2019-01-30
+* Updated at  : 2019-08-05
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -9,25 +9,23 @@ _._._._._._._._._._._._._._._._._._._._._.*/
 // ignore:start
 "use strict";
 
-/* globals */
-/* exported */
+/* globals*/
+/* exported*/
 
 // ignore:end
 
-const insert_at = require("jeefo_utils/array/insert_at");
+const insert_at = require("@jeefo/utils/array/insert_at");
 
 const NEW_LINE_REGEXP = /\n/g;
 
-module.exports = class IJeefoSymbol {
+class I_AST_Node {
     constructor () {
-        // jshint ignore:start
-        if (new.target === IJeefoSymbol) {
+        if (new.target === I_AST_Node) {
             throw new Error("Interface class cannot be instantiated.");
         }
-        // jshint ignore:end
     }
 
-    to_string () {
+    print () {
         const properties = Object.keys(this);
         if (! properties.includes("id")) {
             properties.unshift("id");
@@ -60,15 +58,17 @@ module.exports = class IJeefoSymbol {
         const dash_line = `+${ '-'.repeat(max_length + 2) }+`;
         rows.unshift(
             dash_line,
-            `| JeefoSymbol${ ' '.repeat(max_length - "JeefoSymbol".length) } |`,
+            `| AST_Node${ ' '.repeat(max_length - "AST_Node".length) } |`,
             dash_line
         );
         rows.push(dash_line);
 
-        return rows.join('\n');
+        console.log(rows.join('\n'));
     }
 
     toString () {
-        return `<JeefoSymbol[${ this.id }:${ this.precedence }]>`;
+        return `<AST_Node[${ this.id }:${ this.precedence }]>`;
     }
-};
+}
+
+module.exports = I_AST_Node;

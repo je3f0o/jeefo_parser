@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : unexpected_token_exception.js
 * Created at  : 2019-02-09
-* Updated at  : 2019-02-09
+* Updated at  : 2019-08-06
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -10,12 +10,12 @@
 // ignore:start
 "use strict";
 
-/* globals */
-/* exported */
+/* globals*/
+/* exported*/
 
 // ignore:end
 
-const style = require("jeefo_command/src/misc/style");
+const style = require("@jeefo/command/src/misc/style");
 
 const DEFAULT_COLOR    = "gray";
 const FIRST_LINE_REGEX = /^.+[^\n]\n/;
@@ -89,16 +89,16 @@ class UnexpectedTokenException extends SyntaxError {
             {
                 title : "Error information",
                 info  : [
-                    { 
+                    {
                         key         : "Type",
                         value       : "SyntaxError",
                         value_style : value => style(value, "red")
                     },
-                    { 
+                    {
                         key   : "Message",
                         value : this.message
                     },
-                    { 
+                    {
                         key   : "Instanceof",
                         value : `[Class: ${ this.constructor.name }]`,
                         value_style : () => [
@@ -107,7 +107,7 @@ class UnexpectedTokenException extends SyntaxError {
                             style("]", "gray"),
                         ].join('')
                     },
-                    { 
+                    {
                         key   : "Description",
                         value : "Language grammar said it's not correct syntax."
                     }

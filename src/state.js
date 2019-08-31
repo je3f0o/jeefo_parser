@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : state.js
 * Created at  : 2019-03-09
-* Updated at  : 2019-03-09
+* Updated at  : 2019-08-30
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -10,10 +10,12 @@
 // ignore:start
 "use strict";
 
-/* globals */
-/* exported */
+/* globals*/
+/* exported*/
 
 // ignore:end
+
+const for_each = require("@jeefo/utils/object/for_each");
 
 module.exports = class State {
     constructor () {
@@ -28,8 +30,8 @@ module.exports = class State {
         if (typeof value !== "number") {
             throw new Error("State value is not a number");
         }
-        Object.keys(this.values).forEach(key => {
-            if (this.values[key] === value) {
+        for_each(this.values, (key, _value) => {
+            if (_value === value) {
                 throw new Error(`Duplicated state value: '${ value }'`);
             }
         });
@@ -42,7 +44,7 @@ module.exports = class State {
 
     get_value (state_name) {
         if (this.values[state_name] === undefined) {
-            throw new Error("Unregistered state name");
+            throw new Error(`Unregistered state name: ${ state_name }`);
         }
         return this.values[state_name];
     }
