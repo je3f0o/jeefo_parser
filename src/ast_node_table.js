@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : ast_node_table.js
 * Created at  : 2017-08-16
-* Updated at  : 2019-08-30
+* Updated at  : 2019-09-05
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -29,7 +29,14 @@ class AST_Node_Table {
     }
 
 	register_node_definition (node_definition) {
-		this.node_definitions.push(new AST_Node_Definition(node_definition));
+        const def = new AST_Node_Definition(node_definition);
+        const other_def = this.node_definitions.find(other => {
+            return other.id === def.id;
+        });
+        if (other_def) {
+            throw new Error(`Duplicated AST_Node_Definition: ${ def.id }`);
+        }
+		this.node_definitions.push(def);
 		this.node_definitions.sort((a, b) => a.precedence - b.precedence);
 	}
 
@@ -82,6 +89,11 @@ class AST_Node_Table {
                 const index = this.node_definitions.findIndex(def => {
                     return def.id === expression;
                 });
+                if (index === -1) {
+                    throw new Error(`Cannot find AST_Node_Definition: '${
+                        expression
+                    }' to remove`);
+                }
                 this.node_definitions.splice(index, 1);
             }
         });

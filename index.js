@@ -1,11 +1,12 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : index.js
 * Created at  : 2019-01-23
-* Updated at  : 2019-08-30
+* Updated at  : 2019-09-06
 * Author      : jeefo
 * Purpose     :
 * Description :
-_._._._._._._._._._._._._._._._._._._._._.*/
+* Reference   :
+.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.*/
 // ignore:start
 "use strict";
 
@@ -67,6 +68,8 @@ class JeefoParser {
         this.next_node_definition = null;
 
         this.state         = new State();
+        this.suffixes      = [];
+        this.context_stack = [];
         this.current_state = this.state.default;
 
         let onpreparation = null;
@@ -86,12 +89,14 @@ class JeefoParser {
     look_ahead (throw_end_of_stream) {
         const {
             next_token           : current_token,
+            current_state        : prev_state,
             next_node_definition : current_node_def,
             prev_node, previous_nodes
         } = this;
 
         this.tokenizer.streamer.cursor.save();
         this.prev_node      = null;
+        this.current_state  = null;
         this.previous_nodes = [];
         this.prepare_next_node_definition(throw_end_of_stream);
         const next_token = this.next_token;
@@ -99,6 +104,7 @@ class JeefoParser {
         this.tokenizer.streamer.cursor.rollback();
         this.prev_node            = prev_node;
         this.next_token           = current_token;
+        this.current_state        = prev_state;
         this.previous_nodes       = previous_nodes;
         this.next_node_definition = current_node_def;
 
@@ -116,14 +122,15 @@ class JeefoParser {
             }
             // Only dev mode
 
+            this.next_node_definition = this.ast_node_table.find(
+                this.next_token, this
+            );
+
             if (this.onpreparation) {
                 this.onpreparation(this);
             }
-            if (! this.is_terminated && this.next_token) {
-                this.next_node_definition = this.ast_node_table.find(
-                    this.next_token, this
-                );
-            } else {
+
+            if (this.is_terminated || ! this.next_token) {
                 this.next_node_definition = null;
             }
         } else if (throw_end_of_stream) {
@@ -154,7 +161,24 @@ class JeefoParser {
         return this.next_node_definition.generate_new_node(this);
     }
 
-    change_state (state_name) {
+    change_state (state_name, set_prev_state, find_new_node = true) {
+        if (set_prev_state !== undefined) {
+            console.log(set_prev_state);
+            throw new Error("Deprecated");
+        }
+        if (set_prev_state) {
+            this.prev_state = this.current_state;
+        }
+        this.current_state = this.state.get_value(state_name);
+        if (find_new_node) {
+            this.next_node_definition = this.ast_node_table.find(
+                this.next_token, this
+            );
+        }
+    }
+
+    change_states (state_name, prev_state) {
+        this.prev_state           = this.state.get_value(prev_state);
         this.current_state        = this.state.get_value(state_name);
         this.next_node_definition = this.ast_node_table.find(
             this.next_token, this
@@ -195,11 +219,11 @@ class JeefoParser {
             this.ending_index = this.next_token.end.index;
             this.set_prev_node(this.generate_next_node());
 
-            if (
-                this.debug && [null, undefined].includes(this.current_state)
-            ) {
+            // Debug only
+            if ([null, undefined].includes(this.current_state)) {
                 this.throw_unexpected_token("Invalid current_state");
             }
+            // Debug only
 
             if (this.next_token) {
                 if (this.next_token.end.index === this.ending_index) {
@@ -216,11 +240,11 @@ class JeefoParser {
     }
 
     parse (script, tab_size) {
-        const nodes = [];
+        const nodes        = [];
+        this.context_stack = [];
         this.tokenizer.init(script, tab_size);
 
         this.prepare_next_state();
-
         while (this.next_token) {
             const node = this.parse_next_node(TERMINATOR_PRECEDENCE);
             if (node) {
@@ -247,12 +271,46 @@ class JeefoParser {
         this.previous_nodes.push(prev_node);
     }
 
-    get_current_state_name () {
-        const { current_state, state : { values } } = this;
+    get_state_name (state) {
+        const { values } = this.state;
 
         return Object.keys(values).find(state_name => {
-            return values[state_name] === current_state;
+            return values[state_name] === state;
         });
+    }
+
+    get_state_value (state_name) {
+        return this.state.get_value(state_name);
+    }
+
+    get_current_state_name () {
+        return this.get_state_name(this.current_state);
+    }
+
+    end (node) {
+        this.ending_index = node.end.index;
+    }
+
+    refine (state_name, input_node) {
+        this.change_state(state_name, undefined);
+        if (! this.next_node_definition) {
+            this.throw_unexpected_token(
+                `Unexpected state to refine: ${ state_name }`
+            );
+        }
+
+        const Node = this.next_node_definition.Node;
+        if (! this.next_node_definition.refine) {
+            this.throw_unexpected_token(
+                `refine method is not implemented in: ${
+                    Node.prototype.constructor.name
+                }`
+            );
+        }
+
+        const node = new Node();
+        this.next_node_definition.refine(node, input_node, this);
+        return node;
     }
 
     is_reserved_word (value) {
@@ -276,6 +334,14 @@ class JeefoParser {
         }
         if (this.debug) { console.log(this); }
         throw new UnexpectedTokenException(this, error_message);
+    }
+
+    throw_unexpected_refine (refining_node, error_node) {
+        this.throw_unexpected_token(
+            `Unexpected '${ error_node.constructor.name }' refine in: ${
+                refining_node.constructor.name
+            }`, error_node
+        );
     }
 
     throw_unexpected_end_of_stream () {
@@ -314,9 +380,7 @@ class JeefoParser {
             ast_node_table.register_reserved_words(def.words, def.node_def);
         });
 
-        ast_node_table.node_definitions = node_definitions.map(def => {
-            return new AST_Node_Definition(def);
-        });
+        ast_node_table.node_definitions = node_definitions.map(d => d.clone());
 
         const clone  = new JeefoParser(name, tokenizer, ast_node_table);
         Object.assign(clone.state.values, this.state.values);

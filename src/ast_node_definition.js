@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : ast_node_definition.js
 * Created at  : 2019-01-26
-* Updated at  : 2019-08-06
+* Updated at  : 2019-09-05
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -14,9 +14,11 @@ _._._._._._._._._._._._._._._._._._._._._.*/
 
 // ignore:end
 
-const assign    = require("@jeefo/utils/object/assign");
-const readonly  = require("@jeefo/utils/object/readonly");
-const IAST_Node = require("./i_ast_node");
+const for_each      = require("@jeefo/utils/object/for_each");
+const readonly      = require("@jeefo/utils/object/readonly");
+const capitalize    = require("@jeefo/utils/string/capitalize");
+const extend_member = require("@jeefo/utils/class/extend_member");
+const I_AST_Node    = require("./i_ast_node");
 
 class AST_Node_Definition {
 	/**
@@ -36,42 +38,92 @@ class AST_Node_Definition {
             throw new Error("Invalid argument: ast_node_definition.is");
         }
         if (typeof ast_node_definition.initialize !== "function") {
-            console.log(222, ast_node_definition);
             throw new Error("Invalid argument: ast_node_definition.initialize");
         }
 
-        class AST_Node extends IAST_Node {}
-        // Cheap and simple way
-        // TODO: think about class_extender helper function
-		assign(AST_Node.prototype, {
-			id         : ast_node_definition.id,
-			type       : ast_node_definition.type,
-			precedence : ast_node_definition.precedence,
-		});
-		this.AST_Node = AST_Node;
+        const class_name = ast_node_definition.id.split(' ').map(word => {
+            return capitalize(word);
+        }).join('');
 
-        ["id", "type", "precedence"].forEach(prop => {
-            const value = ast_node_definition[prop];
-            readonly(this, prop, value);
-            //readonly(AST_Node.prototype, prop, value, false);
+        // jshint evil:true
+        const Node = (new Function("I_AST_Node", `
+            class ${ class_name } extends I_AST_Node {
+                constructor () {
+                    super();
+                    this._id = "${
+                        ast_node_definition.id
+                    }";
+                    this._type = "${
+                        ast_node_definition.type
+                    }";
+                    this._precedence = ${
+                        ast_node_definition.precedence
+                    };
+                }
+            }
+            return ${ class_name };
+        `))(I_AST_Node);
+        // jshint evil:false
+
+        for_each(ast_node_definition, (key, value) => {
+            switch (key) {
+                case "id" :
+                case "type" :
+                case "precedence" :
+                    readonly(this, key, value);
+                    readonly(Node.prototype, key, value, false);
+                    break;
+                case "protos" : break;
+                default:
+                    this[key] = value;
+            }
         });
 
-        ["is", "initialize"].forEach(prop=> {
-            this[prop] = ast_node_definition[prop];
-        });
+        if (ast_node_definition.protos) {
+            for_each(ast_node_definition.protos, (key, value) => {
+                extend_member(Node, key, value);
+            });
+        }
+
+        readonly(this, "Node", Node, false);
 	}
 
 	generate_new_node (parser) {
-		const ast_node = new this.AST_Node();
-        // Only dev mode
-        ast_node.id         = this.id;
-        ast_node.type       = this.type;
-        ast_node.precedence = this.precedence;
-        // Only dev mode
-		this.initialize(ast_node, parser.next_token, parser);
+		const node = new this.Node();
+		this.initialize(node, parser.next_token, parser);
 
-		return ast_node;
+		return node;
 	}
+
+    clone () {
+        const protos     = {};
+        const definition = { protos };
+
+        Object.getOwnPropertyNames(this).forEach(prop => {
+            switch (prop) {
+                case "Node"        :
+                case "constructor" :
+                    break;
+                default:
+                    definition[prop] = this[prop];
+            }
+        });
+
+        const { prototype } = this.Node;
+        Object.getOwnPropertyNames(prototype).forEach(prop => {
+            switch (prop) {
+                case "id"          :
+                case "type"        :
+                case "precedence"  :
+                case "constructor" :
+                    break;
+                default:
+                    protos[prop] = prototype[prop];
+            }
+        });
+
+        return new AST_Node_Definition(definition);
+    }
 }
 
 module.exports = AST_Node_Definition;

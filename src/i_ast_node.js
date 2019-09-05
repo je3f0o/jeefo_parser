@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : i_ast_node.js
 * Created at  : 2019-01-27
-* Updated at  : 2019-08-05
+* Updated at  : 2019-09-03
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -67,7 +67,7 @@ class I_AST_Node {
     }
 
     toString () {
-        return `<AST_Node[${ this.id }:${ this.precedence }]>`;
+        return `<${ this.constructor.name }>`;
     }
 }
 
