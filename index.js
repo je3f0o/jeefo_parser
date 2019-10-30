@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : index.js
 * Created at  : 2019-01-23
-* Updated at  : 2019-09-06
+* Updated at  : 2019-09-08
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -128,10 +128,10 @@ class JeefoParser {
 
             if (this.onpreparation) {
                 this.onpreparation(this);
-            }
 
-            if (this.is_terminated || ! this.next_token) {
-                this.next_node_definition = null;
+                if (this.is_terminated || ! this.next_token) {
+                    this.next_node_definition = null;
+                }
             }
         } else if (throw_end_of_stream) {
             this.throw_unexpected_end_of_stream();
@@ -175,14 +175,6 @@ class JeefoParser {
                 this.next_token, this
             );
         }
-    }
-
-    change_states (state_name, prev_state) {
-        this.prev_state           = this.state.get_value(prev_state);
-        this.current_state        = this.state.get_value(state_name);
-        this.next_node_definition = this.ast_node_table.find(
-            this.next_token, this
-        );
     }
 
     terminate (node) {
@@ -295,7 +287,8 @@ class JeefoParser {
         this.change_state(state_name, undefined);
         if (! this.next_node_definition) {
             this.throw_unexpected_token(
-                `Unexpected state to refine: ${ state_name }`
+                `Unexpected state to refine: ${ state_name }`,
+                input_node
             );
         }
 
@@ -304,7 +297,7 @@ class JeefoParser {
             this.throw_unexpected_token(
                 `refine method is not implemented in: ${
                     Node.prototype.constructor.name
-                }`
+                }`, input_node
             );
         }
 

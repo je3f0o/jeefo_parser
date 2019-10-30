@@ -4,7 +4,8 @@
   "description": "A library for parsing AST for any language.",
   "author": {
     "name": "je3f0o",
-    "email": "je3f0o@gmail.com"
+    "email": "je3f0o@gmail.com",
+    "name2": "Suhee"
   },
   "homepage": "https://github.com/je3f0o/jeefo_parser",
   "license": "MIT",

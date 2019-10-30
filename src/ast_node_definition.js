@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : ast_node_definition.js
 * Created at  : 2019-01-26
-* Updated at  : 2019-09-05
+* Updated at  : 2019-10-17
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -15,7 +15,7 @@ _._._._._._._._._._._._._._._._._._._._._.*/
 // ignore:end
 
 const for_each      = require("@jeefo/utils/object/for_each");
-const readonly      = require("@jeefo/utils/object/readonly");
+const Readonly      = require("@jeefo/utils/object/readonly");
 const capitalize    = require("@jeefo/utils/string/capitalize");
 const extend_member = require("@jeefo/utils/class/extend_member");
 const I_AST_Node    = require("./i_ast_node");
@@ -65,13 +65,15 @@ class AST_Node_Definition {
         `))(I_AST_Node);
         // jshint evil:false
 
+        const proto_readonly    = new Readonly(Node.prototype);
+        const instance_readonly = new Readonly(this);
         for_each(ast_node_definition, (key, value) => {
             switch (key) {
                 case "id" :
                 case "type" :
                 case "precedence" :
-                    readonly(this, key, value);
-                    readonly(Node.prototype, key, value, false);
+                    proto_readonly.prop(key, value, false);
+                    instance_readonly.prop(key, value);
                     break;
                 case "protos" : break;
                 default:
@@ -85,7 +87,7 @@ class AST_Node_Definition {
             });
         }
 
-        readonly(this, "Node", Node, false);
+        instance_readonly.prop("Node", Node, false);
 	}
 
 	generate_new_node (parser) {
