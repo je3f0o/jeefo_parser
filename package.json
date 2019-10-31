@@ -1,6 +1,6 @@
 {
     "name": "@jeefo/parser",
-    "version": "0.0.23",
+    "version": "0.0.24",
     "description": "A library for parsing AST for any language.",
     "author": {
         "name": "je3f0o",
@@ -30,6 +30,6 @@
     },
     "dependencies": {
         "@jeefo/command": "0.0.3",
-        "@jeefo/tokenizer": "0.0.3"
+        "@jeefo/tokenizer": "0.0.4"
     }
 }
