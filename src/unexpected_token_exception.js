@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : unexpected_token_exception.js
 * Created at  : 2019-02-09
-* Updated at  : 2019-08-06
+* Updated at  : 2019-10-31
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -15,7 +15,7 @@
 
 // ignore:end
 
-const style = require("@jeefo/command/src/misc/style");
+const style = require("@jeefo/command/misc/style");
 
 const DEFAULT_COLOR    = "gray";
 const FIRST_LINE_REGEX = /^.+[^\n]\n/;

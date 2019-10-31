@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : index.js
 * Created at  : 2019-01-23
-* Updated at  : 2019-09-08
+* Updated at  : 2019-10-31
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -18,11 +18,11 @@
 const JeefoTokenizer           = require("@jeefo/tokenizer");
 const assign                   = require("@jeefo/utils/object/assign");
 const for_each                 = require("@jeefo/utils/object/for_each");
-const State                    = require("./src/state");
-const I_AST_Node               = require("./src/i_ast_node");
-const AST_Node_Table           = require("./src/ast_node_table");
-const AST_Node_Definition      = require("./src/ast_node_definition");
-const UnexpectedTokenException = require("./src/unexpected_token_exception");
+const State                    = require("./state");
+const I_AST_Node               = require("./i_ast_node");
+const AST_Node_Table           = require("./ast_node_table");
+const AST_Node_Definition      = require("./ast_node_definition");
+const UnexpectedTokenException = require("./unexpected_token_exception");
 
 const TERMINATOR_PRECEDENCE  = 0;
 const object_define_property = Object.defineProperty;
