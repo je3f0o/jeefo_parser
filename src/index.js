@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : index.js
 * Created at  : 2019-01-23
-* Updated at  : 2019-10-31
+* Updated at  : 2020-10-22
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -58,12 +58,12 @@ class JeefoParser {
         this.tokenizer      = tokenizer;
         this.ast_node_table = ast_node_table;
 
-        this.debug          = false;
-        this.prev_node      = null;
-        this.ending_index   = 0;
-        this.is_terminated  = null;
-        this.previous_nodes = null;
-
+        this.is_terminated        = true;
+        this.prepare_next_node    = true;
+        this.prev_node            = null;
+        this.prev_token           = null;
+        this.previous_nodes       = null;
+        this.previous_tokens      = null;
         this.next_token           = null;
         this.next_node_definition = null;
 
@@ -88,30 +88,40 @@ class JeefoParser {
 
     look_ahead (throw_end_of_stream) {
         const {
-            next_token           : current_token,
-            current_state        : prev_state,
-            next_node_definition : current_node_def,
-            prev_node, previous_nodes
+            current_state,
+            is_terminated,
+            prev_node,
+            previous_nodes,
+            prev_token,
+            previous_tokens,
+            next_token,
+            next_node_definition,
         } = this;
 
         this.tokenizer.streamer.cursor.save();
-        this.prev_node      = null;
-        this.current_state  = null;
-        this.previous_nodes = [];
+        this.is_terminated = false;
+
+        // Taking account `onpreparation` event
         this.prepare_next_node_definition(throw_end_of_stream);
-        const next_token = this.next_token;
+        const result_next_token = this.next_token;
 
         this.tokenizer.streamer.cursor.rollback();
+        this.is_terminated        = is_terminated;
+        this.current_state        = current_state;
         this.prev_node            = prev_node;
-        this.next_token           = current_token;
-        this.current_state        = prev_state;
         this.previous_nodes       = previous_nodes;
-        this.next_node_definition = current_node_def;
+        this.prev_token           = prev_token;
+        this.previous_tokens      = previous_tokens;
+        this.next_token           = next_token;
+        this.next_node_definition = next_node_definition;
 
-        return next_token;
+        return result_next_token;
     }
 
     prepare_next_node_definition (throw_end_of_stream) {
+        if (this.next_token) {
+            this.previous_tokens.push(this.prev_token = this.next_token);
+        }
         this.next_token = this.tokenizer.get_next_token();
 
         if (this.next_token) {
@@ -136,14 +146,18 @@ class JeefoParser {
         } else if (throw_end_of_stream) {
             this.throw_unexpected_end_of_stream();
         } else {
+            this.is_terminated        = true;
             this.next_node_definition = null;
         }
     }
 
     prepare_next_state (state_name, throw_end_of_stream) {
         this.prev_node            = null;
-        this.is_terminated        = false;
+        this.prev_token           = null;
         this.previous_nodes       = [];
+        this.previous_tokens      = [];
+        this.is_terminated        = false;
+        this.prepare_next_node    = true;
         this.next_node_definition = null;
 
         if (state_name) {
@@ -178,54 +192,38 @@ class JeefoParser {
     }
 
     terminate (node) {
-        if (node === undefined) {
-            if (this.debug) { console.log(this); }
-            throw new Error("argument must be AST_Node object.");
-        }
-
+        if (node) this.end(node);
         this.is_terminated        = true;
-        this.next_token           = null;
         this.next_node_definition = null;
-        assign(this.tokenizer.streamer.cursor.position, node.end);
     }
 
     parse_next_node (left_precedence) {
         if (typeof left_precedence !== "number") {
-            if (this.debug) { console.log(this); }
             throw new Error("Invalid left precedence");
         }
 
-        while (this.next_token) {
-            if (this.next_node_definition === null) {
-                if (this.throw_not_found) {
-                    this.throw_unexpected_token(
-                        "AST_Node_Definition is not found"
-                    );
-                }
-                break;
-            }
-            if (this.next_node_definition.precedence <= left_precedence) {
-                break;
-            }
+        const {cursor} = this.tokenizer.streamer;
+        while (! this.is_terminated) {
+            const {next_node_definition} = this;
+            if (! next_node_definition) this.throw_unexpected_token(
+                "AST_Node_Definition is not found"
+            );
+            if (next_node_definition.precedence <= left_precedence) break;
+            const node = this.generate_next_node();
+            this.set_prev_node(node);
 
-            this.ending_index = this.next_token.end.index;
-            this.set_prev_node(this.generate_next_node());
-
-            // Debug only
+            // DEBUG_START
             if ([null, undefined].includes(this.current_state)) {
                 this.throw_unexpected_token("Invalid current_state");
             }
-            // Debug only
+            // DEBUG_END
 
-            if (this.next_token) {
-                if (this.next_token.end.index === this.ending_index) {
-                    this.prepare_next_node_definition();
-                } else {
-                    this.next_node_definition = this.ast_node_table.find(
-                        this.next_token, this
-                    );
-                }
-            }
+            (
+                ! this.is_terminated &&
+                this.prepare_next_node &&
+                node.end.index === cursor.position.index &&
+                this.prepare_next_node_definition()
+            );
         }
 
         return this.prev_node;
@@ -280,11 +278,11 @@ class JeefoParser {
     }
 
     end (node) {
-        this.ending_index = node.end.index;
+        assign(this.tokenizer.streamer.cursor.position, node.end);
     }
 
     refine (state_name, input_node) {
-        this.change_state(state_name, undefined);
+        this.change_state(state_name);
         if (! this.next_node_definition) {
             this.throw_unexpected_token(
                 `Unexpected state to refine: ${ state_name }`,
@@ -311,21 +309,23 @@ class JeefoParser {
     }
 
     expect (expectation, condition) {
-        if (! condition(this)) {
-            const { streamer } = this.tokenizer;
+        if (typeof condition === "function") condition = condition(this);
+        if (! condition) {
+            const {streamer} = this.tokenizer;
             this.throw_unexpected_token(
-                `Expected ${ expectation } instead saw: ${
+                `Expected ${expectation} instead saw: ${
                     streamer.substring_from_token(this.next_token)
                 }`
             );
         }
     }
 
+    to_string (node) {
+        return this.tokenizer.streamer.substring_from_token(node);
+    }
+
     throw_unexpected_token (error_message, token) {
-        if (token) {
-            this.next_token = token;
-        }
-        if (this.debug) { console.log(this); }
+        if (token) this.next_token = token;
         throw new UnexpectedTokenException(this, error_message);
     }
 
@@ -338,8 +338,12 @@ class JeefoParser {
     }
 
     throw_unexpected_end_of_stream () {
-        if (this.debug) { console.log(this); }
         throw new SyntaxError("Unexpected end of stream");
+    }
+
+    log (node) {
+        console.log(node);
+        console.log(this.to_string(node));
     }
 
     clone (name) {

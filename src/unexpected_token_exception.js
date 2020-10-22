@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : unexpected_token_exception.js
 * Created at  : 2019-02-09
-* Updated at  : 2019-10-31
+* Updated at  : 2020-10-22
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -82,8 +82,11 @@ class UnexpectedTokenException extends SyntaxError {
             split('\n')[parser.next_token.start.line - 1].
             replace(/\t/g, ' '.repeat(parser.tokenizer.tab_size));
 
-        const spaces   = ' '.repeat(parser.next_token.start.virtual_column - 1);
-        const pointers = '^'.repeat(parser.next_token.end.virtual_column - parser.next_token.start.virtual_column + 1);
+        const spaces_length = this.token.start.virtual_column - 1;
+        let hat_length = this.token.end.virtual_column - this.token.start.virtual_column + 1;
+        if (hat_length < 0) hat_length = 1;
+        const spaces   = ' '.repeat(spaces_length);
+        const pointers = '^'.repeat(hat_length);
 
         const table = [
             {

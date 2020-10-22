@@ -1,7 +1,7 @@
 {
     "name": "@jeefo/parser",
-    "version": "0.0.25",
-    "description": "A library for parsing AST for any language.",
+    "version": "0.0.26",
+    "description": "A library for parsing AST nodes. (under developing...)",
     "author": {
         "name": "je3f0o",
         "email": "je3f0o@gmail.com"
@@ -11,7 +11,6 @@
     "copyright": "2019",
     "main": "index.js",
     "scripts": {
-        "test": "./node_modules/mocha/bin/mocha \"specs/**/*_specs.js\"",
         "save": "git add . && git c \"`date`\" && git p",
         "save_version": "git add . && git c \"v$npm_package_version\" && git p",
         "jeefo_publish": "node node_modules/@jeefo/publish/publish.js"
