@@ -1,7 +1,7 @@
 /* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
 * File Name   : ast_node_definition.js
 * Created at  : 2019-01-26
-* Updated at  : 2019-10-17
+* Updated at  : 2021-01-06
 * Author      : jeefo
 * Purpose     :
 * Description :
@@ -47,21 +47,15 @@ class AST_Node_Definition {
 
         // jshint evil:true
         const Node = (new Function("I_AST_Node", `
-            class ${ class_name } extends I_AST_Node {
-                constructor () {
-                    super();
-                    this._id = "${
-                        ast_node_definition.id
-                    }";
-                    this._type = "${
-                        ast_node_definition.type
-                    }";
-                    this._precedence = ${
-                        ast_node_definition.precedence
-                    };
-                }
+            function ${class_name} () {
+                I_AST_Node.call(this);
+                this._id         = "${ast_node_definition.id}";
+                this._type       = "${ast_node_definition.type}";
+                this._precedence = ${ast_node_definition.precedence};
             }
-            return ${ class_name };
+            ${class_name}.prototype = Object.create(I_AST_Node.prototype);
+
+            return ${class_name};
         `))(I_AST_Node);
         // jshint evil:false
 
